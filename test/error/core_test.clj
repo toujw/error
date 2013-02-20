@@ -10,16 +10,30 @@
   IError
   (error? [_] true))
 
+(defn- safety []
+  (throw (Exception. "This shouldn't happen!")))
+
 (deftest if-let+-test
   (testing "Success"
-    (is (= (if-let+ [a 4] 4) 4))
-    (is (= (if-let+ [a 5 b 3] (+ a b)) 8))
-    (is (= (if-let+ [a "asdf"] "asdf") "asdf"))
-    (is (= (if-let+ [a (TestSuccess.)] (TestSuccess.)) (TestSuccess.))))
+    (is (= (if-let+ [] 1) 1))
+    (is (= (if-let+ [] 1 2) 1))
+    (is (= (if-let+ [a 1] a) 1))
+    (is (= (if-let+ [a 1] a 2) 1))
+    (is (= (if-let+ [a 1 b 2] a) 1))
+    (is (= (if-let+ [a 1 b 2] a 2) 1))
+    (is (= (if-let+ [a (TestSuccess.)] 1) 1))
+    (is (= (if-let+ [a (TestSuccess.)] 1 2) 1))
+    (is (= (if-let+ [_ true] 1) 1))
+    (is (= (if-let+ [a 1] nil) nil)))
   (testing "Failure"
-    (is (= (if-let+ [a nil] true) nil))
-    (is (= (let [t (Throwable.)] (if-let+ [a t] true) t)))
-    (is (= (if-let+ [a (TestError.)] true) (TestError.))))
-  (testing "Then"
-    (is (= (if-let+ [a nil b 5] true false) false))
-    (is (= (if-let+ [a true b 5] true false) true))))
+    (is (= (if-let+ [a nil b (safety)] 1) nil))
+    (is (= (if-let+ [a nil b (safety)] 1 2) 2))
+    (is (= (let [t (Throwable.)] (if-let+ [a t b (safety)] 1) t)))
+    (is (= (let [t (Throwable.)] (if-let+ [a t b (safety)] 1 2) 2)))
+    (is (= (let [t (TestError.)] (if-let+ [a t b (safety)] 1) t)))
+    (is (= (let [t (TestError.)] (if-let+ [a t b (safety)] 1 2) 2)))
+    (is (= (let [t (Throwable.)] (if-let+ [_ t b (safety)] 1) t)))
+    (is (= (let [t (Throwable.)] (if-let+ [_ t b (safety)] 1 2) 2)))
+    (is (= (if-let+ [_ nil b (safety)] 1) nil))
+    (is (= (if-let+ [_ nil b (safety)] 1 2) 2))
+    (is (= (if-let+ [a (Throwable.) b (safety)] nil nil) nil))))
